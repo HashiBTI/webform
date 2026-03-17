@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan Telecaller Form with Document Auto-Fill + Gemini Tool</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      background: #f4f7fb;
+      color: #222;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .header {
+      background: #0f172a;
+      color: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    }
+
+    .header h1 {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    }
+
+    .section h2 {
+      font-size: 22px;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+
+    .section p {
+      color: #64748b;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field.full {
+      grid-column: span 2;
+    }
+
+    label {
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .required {
+      color: red;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: .2s;
+      background: #fff;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    button {
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .submit-btn, .scan-btn {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    .scan-btn {
+      background: #2563eb;
+    }
+
+    .submit-btn:hover, .scan-btn:hover {
+      opacity: .92;
+    }
+
+    .reset-btn {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .reset-btn:hover {
+      background: #cbd5e1;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .checkbox-row input {
+      width: auto;
+      margin-top: 2px;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      display: block;
+    }
+
+    pre {
+      margin-top: 14px;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 10px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    .doc-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .doc-chip {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      padding: 12px;
+      border-radius: 12px;
+      color: #1e3a8a;
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    .hint-list {
+      margin: 6px 0 0 18px;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .backend-ai-wrap {
+      border: 1px solid #dbeafe;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,.05);
+    }
+
+    .backend-ai-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #0f172a;
+      color: #fff;
+    }
+
+    .backend-ai-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .backend-ai-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .backend-ai-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .backend-ai-subtitle {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .mini-btn {
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .mini-btn:hover {
+      background: #334155;
+    }
+
+    .backend-ai-chat-area {
+      min-height: 420px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding: 18px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .backend-ai-msg {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .backend-ai-msg.user {
+      flex-direction: row-reverse;
+    }
+
+    .backend-ai-msg-avatar {
+      min-width: 34px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .backend-ai-msg.user .backend-ai-msg-avatar {
+      background: #0f172a;
+    }
+
+    .backend-ai-msg-bubble {
+      max-width: 78%;
+      padding: 13px 15px;
+      border-radius: 16px;
+      background: #fff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .backend-ai-msg.user .backend-ai-msg-bubble {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+
+    .backend-ai-input-wrap {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      align-items: flex-end;
+    }
+
+    #backendAiInput {
+      flex: 1;
+      min-height: 52px;
+      max-height: 160px;
+      resize: none;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .backend-ai-send-btn {
+      background: #2563eb;
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      min-width: 110px;
+    }
+
+    .backend-ai-send-btn:hover {
+      opacity: .92;
+    }
+
+    .backend-ai-note {
+      padding: 0 16px 16px 16px;
+      color: #64748b;
+      font-size: 12px;
+      background: #fff;
+      line-height: 1.5;
+    }
+
+    .backend-ai-typing {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .backend-ai-typing span {
+      width: 6px;
+      height: 6px;
+      background: #64748b;
+      border-radius: 50%;
+      display: inline-block;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+
+    .backend-ai-typing span:nth-child(2) { animation-delay: .15s; }
+    .backend-ai-typing span:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: .25; transform: scale(.9); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: span 1;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .backend-ai-msg-bubble {
+        max-width: 90%;
+      }
+
+      .backend-ai-input-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .backend-ai-send-btn {
+        width: 100%;
+      }
+
+      .backend-ai-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Loan Telecaller Enquiry Form</h1>
+      <p>
+        Telecaller can fill details manually or upload customer documents like Aadhaar, PAN, bank statement, or payslip.
+        The system reads text from supported files and auto-fills matching fields wherever possible.
+      </p>
+    </div>
+
+    <form id="loanForm">
+      <div class="section">
+        <h2>0. Document Auto-Fill</h2>
+        <p>
+          Upload one or more supporting documents. Supported best: text PDFs and TXT files.
+          For image-only PDFs or images, browser-only extraction is limited and backend OCR is recommended.
+        </p>
+        <div class="grid">
+          <div class="field full">
+            <label>Upload Documents</label>
+            <input type="file" id="documentFiles" accept=".pdf,.txt,.jpg,.jpeg,.png" multiple />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="scan-btn" id="scanDocsBtn">Read Documents & Auto-Fill</button>
+        </div>
+
+        <div class="message info" id="infoBox">
+          Suggested usage:
+          <ul class="hint-list">
+            <li>Telecaller fills all details directly during call, or</li>
+            <li>Telecaller asks customer for Aadhaar, PAN, payslip, bank statement, then clicks auto-fill.</li>
+            <li>After auto-fill, telecaller reviews missing fields and completes the rest manually.</li>
+          </ul>
+        </div>
+
+        <div id="docSummary" class="doc-list" style="margin-top:16px"></div>
+        <div id="scanSuccess" class="message success"></div>
+        <div id="scanError" class="message error"></div>
+        <pre id="extractedTextBox"></pre>
+      </div>
+
+      <div class="section">
+        <h2>1. Telecaller Details</h2>
+        <p>Track lead source and ownership.</p>
+        <div class="grid">
+          <div class="field">
+            <label>Telecaller Name <span class="required">*</span></label>
+            <input type="text" name="telecallerName" required />
+          </div>
+          <div class="field">
+            <label>Call Date <span class="required">*</span></label>
+            <input type="date" name="callDate" required />
+          </div>
+          <div class="field">
+            <label>Lead Source <span class="required">*</span></label>
+            <select name="leadSource" required>
+              <option value="">Select Lead Source</option>
+              <option>Facebook</option>
+              <option>Google</option>
+              <option>Website</option>
+              <option>Referral</option>
+              <option>Walk-in</option>
+              <option>WhatsApp</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Lead ID / Reference No.</label>
+            <input type="text" name="leadId" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>2. Applicant Details</h2>
+        <p>Capture customer profile and contact details.</p>
+        <div class="grid">
+          <div class="field">
+            <label>Applicant Full Name <span class="required">*</span></label>
+            <input type="text" name="applicantName" required />
+          </div>
+          <div class="field">
+            <label>Mobile Number <span class="required">*</span></label>
+            <input type="tel" name="mobile" required />
+          </div>
+          <div class="field">
+            <label>Alternate Number</label>
+            <input type="tel" name="alternateMobile" />
+          </div>
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" name="email" />
+          </div>
+          <div class="field">
+            <label>Date of Birth</label>
+            <input type="date" name="dob" />
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <select name="gender">
+              <option value="">Select Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Marital Status</label>
+            <select name="maritalStatus">
+              <option value="">Select Marital Status</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>City <span class="required">*</span></label>
+            <input type="text" name="city" required />
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input type="text" name="state" />
+          </div>
+          <div class="field full">
+            <label>Current Address</label>
+            <textarea name="address"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>3. Loan Requirement</h2>
+        <p>Understand loan need and urgency.</p>
+        <div class="grid">
+          <div class="field">
+            <label>Loan Type <span class="required">*</span></label>
+            <select name="loanType" required>
+              <option value="">Select Loan Type</option>
+              <option>Home Loan</option>
+              <option>Mortgage Loan</option>
+              <option>Personal Loan</option>
+              <option>Business Loan</option>
+              <option>Loan Against Property</option>
+              <option>Vehicle Loan</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Required Loan Amount (₹) <span class="required">*</span></label>
+            <input type="number" name="loanAmount" required />
+          </div>
+          <div class="field full">
+            <label>Purpose of Loan <span class="required">*</span></label>
+            <textarea name="loanPurpose" required></textarea>
+          </div>
+          <div class="field">
+            <label>Property Type</label>
+            <select name="propertyType">
+              <option value="">Select Property Type</option>
+              <option>Plot</option>
+              <option>Apartment</option>
+              <option>Villa</option>
+              <option>Commercial</option>
+              <option>Self Construction</option>
+              <option>Resale Property</option>
+              <option>NA</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Property Location</label>
+            <input type="text" name="propertyLocation" />
+          </div>
+          <div class="field">
+            <label>Property Value / Budget (₹)</label>
+            <input type="number" name="propertyValue" />
+          </div>
+          <div class="field">
+            <label>Preferred EMI Range (₹)</label>
+            <input type="text" name="emiRange" />
+          </div>
+          <div class="field">
+            <label>Preferred Bank / NBFC</label>
+            <input type="text" name="preferredLender" />
+          </div>
+          <div class="field">
+            <label>Loan Urgency</label>
+            <select name="urgency">
+              <option value="">Select Urgency</option>
+              <option>Immediate</option>
+              <option>Within 7 Days</option>
+              <option>Within 15 Days</option>
+              <option>Within 30 Days</option>
+              <option>Just Enquiry</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>4. Employment & Income</h2>
+        <p>Assess repayment strength and income profile.</p>
+        <div class="grid">
+          <div class="field">
+            <label>Employment Type <span class="required">*</span></label>
+            <select name="employmentType" required>
+              <option value="">Select Employment Type</option>
+              <option>Salaried</option>
+              <option>Self Employed</option>
+              <option>Business Owner</option>
+              <option>Professional</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Company / Business Name</label>
+            <input type="text" name="companyName" />
+          </div>
+          <div class="field">
+            <label>Monthly Income (₹) <span class="required">*</span></label>
+            <input type="number" name="monthlyIncome" required />
+          </div>
+          <div class="field">
+            <label>Work Experience / Business Vintage</label>
+            <input type="text" name="experience" />
+          </div>
+          <div class="field">
+            <label>Existing EMI (₹)</label>
+            <input type="number" name="existingEmi" />
+          </div>
+          <div class="field">
+            <label>CIBIL Score (if known)</label>
+            <input type="number" name="cibil" />
+          </div>
+          <div class="field">
+            <label>Income Proof Available?</label>
+            <select name="incomeProof">
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Partially</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>5. Documents Availability</h2>
+        <p>Check readiness for loan processing.</p>
+        <div class="grid">
+          <div class="field">
+            <label>PAN Available? <span class="required">*</span></label>
+            <select name="panAvailable" required>
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Aadhaar Available? <span class="required">*</span></label>
+            <select name="aadhaarAvailable" required>
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Bank Statements Available?</label>
+            <select name="bankStatement">
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Partially</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>IT Returns Available?</label>
+            <select name="itrAvailable">
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>NA</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Salary Slips Available?</label>
+            <select name="salarySlips">
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>NA</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Property Documents Ready?</label>
+            <select name="propertyDocs">
+              <option value="">Select Option</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>In Process</option>
+              <option>NA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>6. Lead Status & Follow-up</h2>
+        <p>Track eligibility and next action.</p>
+        <div class="grid">
+          <div class="field">
+            <label>Lead Status <span class="required">*</span></label>
+            <select name="leadStatus" required>
+              <option value="">Select Status</option>
+              <option>Fresh Lead</option>
+              <option>Interested</option>
+              <option>Follow-up Required</option>
+              <option>Documents Pending</option>
+              <option>Not Eligible</option>
+              <option>Call Back Later</option>
+              <option>Closed</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Eligibility Assessment</label>
+            <select name="eligibility">
+              <option value="">Select Assessment</option>
+              <option>Looks Eligible</option>
+              <option>May Be Eligible</option>
+              <option>Needs Review</option>
+              <option>Not Eligible</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Next Follow-up Date</label>
+            <input type="date" name="followUpDate" />
+          </div>
+          <div class="field full">
+            <label>Remarks / Call Notes</label>
+            <textarea name="remarks"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>7. Gemini Tool</h2>
+        <p>
+          This section uses your backend AI directly. It sends the current form data, uploaded files list,
+          and employee message to your backend endpoint and stores chat history in DB.
+        </p>
+
+        <div class="backend-ai-wrap">
+          <div class="backend-ai-topbar">
+            <div class="backend-ai-topbar-left">
+              <div class="backend-ai-avatar">AI</div>
+              <div>
+                <div class="backend-ai-title">Gemini Tool</div>
+                <div class="backend-ai-subtitle">Connected to backend + DB tracking</div>
+              </div>
+            </div>
+            <div>
+              <button type="button" class="mini-btn" id="clearBackendAiChatBtn">New Chat</button>
+            </div>
+          </div>
+
+          <div class="backend-ai-chat-area" id="backendAiChatArea">
+            <div class="backend-ai-msg assistant">
+              <div class="backend-ai-msg-avatar">AI</div>
+              <div class="backend-ai-msg-bubble">Hello. Please save the lead first, then I can help you with tracked chat support.</div>
+            </div>
+          </div>
+
+          <div class="backend-ai-input-wrap">
+            <textarea id="backendAiInput" placeholder="Ask your AI..." rows="1"></textarea>
+            <button type="button" id="backendAiSendBtn" class="backend-ai-send-btn">Send</button>
+          </div>
+
+          <div class="backend-ai-note">
+            Backend endpoints used:
+            <strong>/api/save-loan-lead</strong> and <strong>/api/loan-ai-chat</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="checkbox-row">
+          <input type="checkbox" id="consent" required />
+          <label for="consent">I confirm that the customer has voluntarily shared these details for loan enquiry and follow-up purpose.</label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="submit-btn">Submit Lead</button>
+          <button type="reset" class="reset-btn">Reset Form</button>
+        </div>
+
+        <div id="successMessage" class="message success">Form submitted successfully.</div>
+        <div id="errorMessage" class="message error">Please fill all required fields properly.</div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const form = document.getElementById('loanForm');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const documentFiles = document.getElementById('documentFiles');
+    const scanDocsBtn = document.getElementById('scanDocsBtn');
+    const extractedTextBox = document.getElementById('extractedTextBox');
+    const scanSuccess = document.getElementById('scanSuccess');
+    const scanError = document.getElementById('scanError');
+    const docSummary = document.getElementById('docSummary');
+
+    const backendAiChatArea = document.getElementById('backendAiChatArea');
+    const backendAiInput = document.getElementById('backendAiInput');
+    const backendAiSendBtn = document.getElementById('backendAiSendBtn');
+    const clearBackendAiChatBtn = document.getElementById('clearBackendAiChatBtn');
+
+    let currentLeadDbId = null;
+
+    let backendAiConversation = [
+      {
+        role: 'assistant',
+        content: 'Hello. Please save the lead first, then I can help you with tracked chat support.'
+      }
+    ];
+
+    function setValue(name, value) {
+      if (!value) return;
+      const field = form.querySelector(`[name="${name}"]`);
+      if (!field) return;
+      if (!field.value) field.value = value;
+    }
+
+    function setSelectIfMatch(name, value) {
+      if (!value) return;
+      const field = form.querySelector(`[name="${name}"]`);
+      if (!field || field.value) return;
+      const normalized = value.toLowerCase().trim();
+      const options = [...field.options];
+      const match = options.find(opt =>
+        opt.text.toLowerCase() === normalized || opt.value.toLowerCase() === normalized
+      );
+      if (match) field.value = match.value || match.text;
+    }
+
+    function markDocAvailability(fieldName) {
+      const field = form.querySelector(`[name="${fieldName}"]`);
+      if (field && !field.value) field.value = 'Yes';
+    }
+
+    function normalizeText(text) {
+      return text.replace(/\s+/g, ' ').trim();
+    }
+
+    function extractPan(text) {
+      const match = text.match(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/);
+      return match ? match[0] : '';
+    }
+
+    function extractAadhaar(text) {
+      const match = text.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
+      return match ? match[0].replace(/\s+/g, ' ') : '';
+    }
+
+    function extractEmail(text) {
+      const match = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      return match ? match[0] : '';
+    }
+
+    function extractPhone(text) {
+      const match = text.match(/(?:\+91[-\s]?)?[6-9]\d{9}\b/);
+      return match ? match[0].replace(/\s+/g, '') : '';
+    }
+
+    function extractDob(text) {
+      const match = text.match(/(?:DOB|Date of Birth)[:\s-]*([0-3]?\d[\/\-.][01]?\d[\/\-.](?:19|20)?\d{2})/i);
+      if (!match) return '';
+      return toISODate(match[1]);
+    }
+
+    function toISODate(raw) {
+      const parts = raw.replace(/\./g, '/').replace(/-/g, '/').split('/');
+      if (parts.length !== 3) return '';
+      let [dd, mm, yy] = parts;
+      if (yy.length === 2) yy = Number(yy) > 50 ? `19${yy}` : `20${yy}`;
+      dd = dd.padStart(2, '0');
+      mm = mm.padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    function extractNameFromAadhaar(text) {
+      const lines = text.split(/\n|\r/).map(x => x.trim()).filter(Boolean);
+      const blacklist = ['government of india', 'india', 'male', 'female', 'dob', 'year of birth', 'aadhaar'];
+      for (const line of lines) {
+        const clean = line.toLowerCase();
+        if (blacklist.some(b => clean.includes(b))) continue;
+        if (/^[A-Za-z][A-Za-z .]{2,}$/.test(line) && line.split(' ').length <= 5) return line;
+      }
+      return '';
+    }
+
+    function extractNameFromPan(text) {
+      const lines = text.split(/\n|\r/).map(x => x.trim()).filter(Boolean);
+      const idx = lines.findIndex(line => /income tax department/i.test(line));
+      if (idx >= 0 && lines[idx + 2]) return lines[idx + 2];
+      return '';
+    }
+
+    function extractNetSalary(text) {
+      const patterns = [
+        /(?:net salary|take home|net pay)[:\s₹]*([\d,]+(?:\.\d{1,2})?)/i,
+        /(?:salary credited|salary credit)[:\s₹]*([\d,]+(?:\.\d{1,2})?)/i,
+        /(?:gross salary)[:\s₹]*([\d,]+(?:\.\d{1,2})?)/i
+      ];
+      for (const p of patterns) {
+        const m = text.match(p);
+        if (m) return m[1].replace(/,/g, '');
+      }
+      return '';
+    }
+
+    function extractCompanyName(text) {
+      const match = text.match(/(?:Employer|Company|Organisation|Organization|Employer Name)[:\s-]*([A-Za-z0-9 &.,()-]{3,})/i);
+      return match ? match[1].trim() : '';
+    }
+
+    function extractBankName(text) {
+      const known = [
+        'State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank', 'Canara Bank',
+        'Punjab National Bank', 'Bank of Baroda', 'Union Bank of India', 'IDFC FIRST Bank', 'IndusInd Bank',
+        'AU Small Finance Bank', 'Yes Bank', 'Federal Bank'
+      ];
+      const found = known.find(name => text.toLowerCase().includes(name.toLowerCase()));
+      return found || '';
+    }
+
+    function extractAccountHolderName(text) {
+      const match = text.match(/(?:account holder|customer name|name)[:\s-]*([A-Za-z .]{3,})/i);
+      return match ? match[1].trim() : '';
+    }
+
+    function extractAddress(text) {
+      const match = text.match(/(?:Address)[:\s-]*([A-Za-z0-9,\/\\\- .]{15,120})/i);
+      return match ? match[1].trim() : '';
+    }
+
+    function extractStateAndCity(text) {
+      const states = ['Karnataka','Andhra Pradesh','Tamil Nadu','Telangana','Kerala','Maharashtra','Delhi'];
+      const cityRegex = /\b(Bengaluru|Bangalore|Chennai|Hyderabad|Mumbai|Pune|Mysuru|Mysore|Hoskote|Malur|Chittoor)\b/i;
+
+      let foundState = states.find(s => text.toLowerCase().includes(s.toLowerCase())) || '';
+      let foundCity = '';
+      const cityMatch = text.match(cityRegex);
+      if (cityMatch) foundCity = cityMatch[0];
+
+      return { city: foundCity, state: foundState };
+    }
+
+    async function extractPdfText(file) {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      return fullText;
+    }
+
+    async function extractTextFromFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (ext === 'pdf') return await extractPdfText(file);
+      if (ext === 'txt') return await file.text();
+
+      if (['jpg', 'jpeg', 'png'].includes(ext)) {
+        return `[Image uploaded: ${file.name}] OCR not enabled in this browser-only demo. Send image to backend OCR/API for extraction.`;
+      }
+
+      return '';
+    }
+
+    function fillFromText(text, fileName) {
+      const lowerName = fileName.toLowerCase();
+      const normalized = normalizeText(text);
+
+      const email = extractEmail(normalized);
+      const phone = extractPhone(normalized);
+      const dob = extractDob(text);
+      const aadhaar = extractAadhaar(normalized);
+      const pan = extractPan(normalized);
+      const address = extractAddress(text);
+      const { city, state } = extractStateAndCity(text);
+      const salary = extractNetSalary(normalized);
+      const companyName = extractCompanyName(text);
+      const bankName = extractBankName(text);
+      const accountName = extractAccountHolderName(text);
+
+      if (lowerName.includes('aadhaar') || aadhaar) {
+        markDocAvailability('aadhaarAvailable');
+        setValue('applicantName', extractNameFromAadhaar(text) || accountName);
+        setValue('mobile', phone);
+        setValue('email', email);
+        setValue('dob', dob);
+        setValue('address', address);
+        setValue('city', city);
+        setValue('state', state);
+      }
+
+      if (lowerName.includes('pan') || pan) {
+        markDocAvailability('panAvailable');
+        setValue('applicantName', extractNameFromPan(text));
+      }
+
+      if (lowerName.includes('payslip') || lowerName.includes('salary') || /net salary|gross salary|pay slip|payslip/i.test(text)) {
+        setSelectIfMatch('employmentType', 'Salaried');
+        setValue('monthlyIncome', salary);
+        setValue('companyName', companyName);
+
+        const salarySlipsField = form.querySelector('[name="salarySlips"]');
+        if (salarySlipsField && !salarySlipsField.value) salarySlipsField.value = 'Yes';
+
+        const incomeProofField = form.querySelector('[name="incomeProof"]');
+        if (incomeProofField && !incomeProofField.value) incomeProofField.value = 'Yes';
+      }
+
+      if (lowerName.includes('bank') || /account statement|bank statement/i.test(text) || bankName) {
+        const bankStatementField = form.querySelector('[name="bankStatement"]');
+        if (bankStatementField && !bankStatementField.value) bankStatementField.value = 'Yes';
+        setValue('preferredLender', bankName);
+        setValue('applicantName', accountName);
+      }
+
+      setValue('mobile', phone);
+      setValue('email', email);
+      setValue('dob', dob);
+      setValue('address', address);
+      setValue('city', city);
+      setValue('state', state);
+    }
+
+    scanDocsBtn.addEventListener('click', async function () {
+      scanSuccess.style.display = 'none';
+      scanError.style.display = 'none';
+      extractedTextBox.style.display = 'none';
+      docSummary.innerHTML = '';
+
+      const files = [...documentFiles.files];
+      if (!files.length) {
+        scanError.textContent = 'Please upload at least one document.';
+        scanError.style.display = 'block';
+        return;
+      }
+
+      let combinedText = '';
+      let processed = 0;
+      const warnings = [];
+
+      for (const file of files) {
+        try {
+          const text = await extractTextFromFile(file);
+          combinedText += `\n\n===== ${file.name} =====\n${text}`;
+          fillFromText(text, file.name);
+          processed++;
+
+          const chip = document.createElement('div');
+          chip.className = 'doc-chip';
+          chip.innerHTML = `<strong>${file.name}</strong><span class="badge">processed</span>`;
+          docSummary.appendChild(chip);
+
+          if (text.includes('OCR not enabled')) warnings.push(file.name);
+        } catch (err) {
+          const chip = document.createElement('div');
+          chip.className = 'doc-chip';
+          chip.style.background = '#fef2f2';
+          chip.style.borderColor = '#fecaca';
+          chip.style.color = '#991b1b';
+          chip.innerHTML = `<strong>${file.name}</strong><span class="badge">failed</span>`;
+          docSummary.appendChild(chip);
+        }
+      }
+
+      extractedTextBox.textContent = combinedText.trim();
+      extractedTextBox.style.display = 'block';
+
+      const msg = warnings.length
+        ? `Processed ${processed} document(s). Some image files need backend OCR for full extraction: ${warnings.join(', ')}`
+        : `Processed ${processed} document(s). Matching fields were auto-filled wherever possible.`;
+
+      scanSuccess.textContent = msg;
+      scanSuccess.style.display = 'block';
+    });
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function addBackendAiMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = `backend-ai-msg ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'backend-ai-msg-avatar';
+      avatar.textContent = role === 'user' ? 'YOU' : 'AI';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'backend-ai-msg-bubble';
+      bubble.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+
+      msg.appendChild(avatar);
+      msg.appendChild(bubble);
+      backendAiChatArea.appendChild(msg);
+      backendAiChatArea.scrollTop = backendAiChatArea.scrollHeight;
+    }
+
+    function showBackendAiTyping() {
+      const msg = document.createElement('div');
+      msg.className = 'backend-ai-msg assistant';
+      msg.id = 'backendAiTypingMessage';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'backend-ai-msg-avatar';
+      avatar.textContent = 'AI';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'backend-ai-msg-bubble';
+      bubble.innerHTML = `
+        <div class="backend-ai-typing">
+          <span></span><span></span><span></span>
+        </div>
+      `;
+
+      msg.appendChild(avatar);
+      msg.appendChild(bubble);
+      backendAiChatArea.appendChild(msg);
+      backendAiChatArea.scrollTop = backendAiChatArea.scrollHeight;
+    }
+
+    function hideBackendAiTyping() {
+      const typing = document.getElementById('backendAiTypingMessage');
+      if (typing) typing.remove();
+    }
+
+    function getFormSnapshot() {
+      const data = {};
+      const elements = form.querySelectorAll('input, select, textarea');
+
+      elements.forEach(el => {
+        if (!el.name) return;
+        if (el.type === 'checkbox') {
+          data[el.name] = el.checked;
+        } else {
+          data[el.name] = (el.value || '').trim();
+        }
+      });
+
+      data.uploadedFiles = [...documentFiles.files].map(f => f.name);
+      data.extractedText = extractedTextBox.textContent || '';
+      return data;
+    }
+
+    async function callBackendAI(userMessage, snapshot) {
+      if (!currentLeadDbId) {
+        throw new Error('Please save the lead first before using chat.');
+      }
+
+      const response = await fetch('/api/loan-ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadDbId: currentLeadDbId,
+          message: userMessage,
+          formData: snapshot,
+          conversation: backendAiConversation
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.reply || result.message || 'Backend AI request failed');
+      }
+
+      return result.reply || 'No reply received from backend AI.';
+    }
+
+    async function handleBackendAiSend(customText = '') {
+      const userMessage = (customText || backendAiInput.value).trim();
+      if (!userMessage) return;
+
+      addBackendAiMessage('user', userMessage);
+      backendAiConversation.push({ role: 'user', content: userMessage });
+
+      backendAiInput.value = '';
+      autoGrowBackendAiTextarea();
+      showBackendAiTyping();
+
+      const snapshot = getFormSnapshot();
+
+      try {
+        const reply = await callBackendAI(userMessage, snapshot);
+        hideBackendAiTyping();
+        addBackendAiMessage('assistant', reply);
+        backendAiConversation.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        hideBackendAiTyping();
+        addBackendAiMessage(
+          'assistant',
+          err.message || 'Backend AI is not responding. Please check your API route, backend server, or JSON response format.'
+        );
+      }
+    }
+
+    function autoGrowBackendAiTextarea() {
+      backendAiInput.style.height = 'auto';
+      backendAiInput.style.height = Math.min(backendAiInput.scrollHeight, 160) + 'px';
+    }
+
+    backendAiSendBtn.addEventListener('click', () => handleBackendAiSend());
+
+    backendAiInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleBackendAiSend();
+      }
+    });
+
+    backendAiInput.addEventListener('input', autoGrowBackendAiTextarea);
+
+    clearBackendAiChatBtn.addEventListener('click', function() {
+      backendAiConversation = [
+        {
+          role: 'assistant',
+          content: 'Hello. Please save the lead first, then I can help you with tracked chat support.'
+        }
+      ];
+
+      backendAiChatArea.innerHTML = `
+        <div class="backend-ai-msg assistant">
+          <div class="backend-ai-msg-avatar">AI</div>
+          <div class="backend-ai-msg-bubble">Hello. Please save the lead first, then I can help you with tracked chat support.</div>
+        </div>
+      `;
+    });
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      successMessage.style.display = 'none';
+      errorMessage.style.display = 'none';
+
+      if (!form.checkValidity()) {
+        errorMessage.style.display = 'block';
+        form.reportValidity();
+        return;
+      }
+
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => { data[key] = value; });
+
+      data.consent = document.getElementById('consent').checked;
+      data.uploadedFiles = [...documentFiles.files].map(f => f.name);
+      data.extractedText = extractedTextBox.textContent || '';
+
+      try {
+        const response = await fetch('/api/save-loan-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          currentLeadDbId = result.lead_db_id;
+          successMessage.textContent = `Lead saved successfully. Tracking ID: ${currentLeadDbId}`;
+          successMessage.style.display = 'block';
+        } else {
+          errorMessage.textContent = result.message || 'Failed to save lead.';
+          errorMessage.style.display = 'block';
+        }
+      } catch (err) {
+        errorMessage.textContent = 'Server error while saving lead.';
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    form.addEventListener('reset', function () {
+      currentLeadDbId = null;
+      successMessage.style.display = 'none';
+      errorMessage.style.display = 'none';
+      extractedTextBox.style.display = 'none';
+      scanSuccess.style.display = 'none';
+      scanError.style.display = 'none';
+      extractedTextBox.textContent = '';
+      docSummary.innerHTML = '';
+      backendAiInput.value = '';
+      backendAiInput.style.height = 'auto';
+
+      backendAiConversation = [
+        {
+          role: 'assistant',
+          content: 'Hello. Please save the lead first, then I can help you with tracked chat support.'
+        }
+      ];
+
+      backendAiChatArea.innerHTML = `
+        <div class="backend-ai-msg assistant">
+          <div class="backend-ai-msg-avatar">AI</div>
+          <div class="backend-ai-msg-bubble">Hello. Please save the lead first, then I can help you with tracked chat support.</div>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
